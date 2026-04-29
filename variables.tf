@@ -6,8 +6,6 @@ variable "private_subnet" {}
 variable "private_subnet_b" {}
 variable "az" {}
 variable "az_2" {}
-variable "key_name" {}
-variable "public_key" {}
 
 ### SG and ALB Variables ###
 variable "app_port" {}
@@ -44,4 +42,86 @@ variable "ssl_certificate_arn" {
   description = "ACM SSL certificate ARN"
   type        = string
   default     = null  # Optional - can be null for HTTP-only
+}
+
+### CodeBuild and CodePipeline Variables ###
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
+}
+
+variable "build_timeout" {
+  description = "Build timeout in minutes"
+  type        = number
+  default     = 60
+}
+
+variable "build_compute_type" {
+  description = "Build compute type"
+  type        = string
+  default     = "BUILD_GENERAL1_SMALL"
+}
+
+variable "build_image" {
+  description = "Build image"
+  type        = string
+  default     = "aws/codebuild/standard:5.0"
+}
+
+variable "aws_account_id" {
+  description = "AWS Account ID"
+  type        = string
+}
+
+variable "image_repo_name" {
+  description = "ECR repository name"
+  type        = string
+}
+
+variable "image_tag" {
+  description = "Docker image tag"
+  type        = string
+  default     = "latest"
+}
+
+variable "buildspec" {
+  description = "Buildspec file path or content"
+  type        = string
+  default     = "buildspec.yml"
+}
+
+variable "codebuild_environment_variables" {
+  description = "Environment variables for CodeBuild"
+  type        = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
+variable "github_oauth_token" {
+  description = "GitHub OAuth token"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_repository" {
+  description = "GitHub repository (owner/repository)"
+  type        = string
+  default     = "gunawan-d/apps-tf"
+}
+
+variable "github_branch" {
+  description = "GitHub branch to build from"
+  type        = string
+  default     = "main"
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {
+    Environment = "dev"
+    ManagedBy   = "terraform"
+  }
 }

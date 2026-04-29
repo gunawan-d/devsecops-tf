@@ -2,7 +2,7 @@
 
 Creates an AWS Application Load Balancer with HTTP/HTTPS listeners, target group, health checks, and optional SSL/TLS certificate integration.
 
-##  Resources Created
+## 🏗️ Resources Created
 
 - **`aws_lb.alb`** - Internet-facing Application Load Balancer
 - **`aws_lb_target_group.tg`** - Target group with IP-based target registration and health checks
@@ -10,7 +10,7 @@ Creates an AWS Application Load Balancer with HTTP/HTTPS listeners, target group
 - **`aws_lb_listener.https`** - HTTPS listener on port 443 (created only if `ssl_certificate_arn` is provided)
 - **`aws_lb_listener_rule.http_to_https`** - Redirect rule from HTTP to HTTPS (301 status code, created only if SSL enabled)
 
-##  Input Variables
+## 📥 Input Variables
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -25,7 +25,7 @@ Creates an AWS Application Load Balancer with HTTP/HTTPS listeners, target group
 | `health_check_matcher` | `string` | No | `"200-399"` | HTTP status codes considered healthy |
 | `ssl_certificate_arn` | `string` | No | `null` | ACM certificate ARN (enables HTTPS listener if provided) |
 
-##  Outputs
+## 🔗 Outputs
 
 | Name | Description |
 |------|-------------|
@@ -34,7 +34,7 @@ Creates an AWS Application Load Balancer with HTTP/HTTPS listeners, target group
 | `target_group_arn` | ARN of the target group (use for ECS service) |
 | `target_group_name` | Name of the target group |
 
-##  Usage Example
+## 💡 Usage Example
 
 ### HTTP Only (no SSL):
 ```hcl
@@ -54,8 +54,12 @@ module "alb" {
 }
 ```
 
-### With HTTPS:
+### With HTTPS (using terraform.tfvars):
 ```hcl
+# terraform.tfvars
+ssl_certificate_arn = "arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+
+# main.tf
 module "alb" {
   source = "./modules/alb"
 
@@ -68,14 +72,20 @@ module "alb" {
   target_group_protocol = "HTTP"
   health_check_path     = "/health"
   health_check_matcher  = "200-399"
-  ssl_certificate_arn   = var.ssl_certificate_arn  # Enables HTTPS
+  ssl_certificate_arn   = var.ssl_certificate_arn
 }
 ```
 
-##  SSL/TLS Configuration
+### With HTTPS (using environment variable):
+```bash
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+terraform apply -target=module.alb
+```
+
+## 🔐 SSL/TLS Configuration
 
 ### Prerequisites
-1. ACM certificate requested/imported in **same region** as ALB (ap-southeast-3)
+1. ACM certificate requested/imported in **same region** as ALB (ap-southeast-1)
 2. Certificate domain must match your custom domain (e.g., `devsecops.igunawan.com`)
 3. Certificate status must be **ISSUED** (not pending validation)
 
@@ -97,14 +107,27 @@ _xxxxxxxx.devsecops.igunawan.com  →  _yyyyyyyy.acm-validations.aws.
 ```
 
 ### Enabling HTTPS
-1. Set `ssl_certificate_arn` in `terraform.tfvars`
-2. Run `terraform apply`
-3. Module automatically:
-   - Creates HTTPS listener on port 443
-   - Attaches SSL certificate
-   - Adds HTTP→HTTPS redirect rule (301)
 
-##  Health Check Configuration
+**Option 1: Via terraform.tfvars**
+```hcl
+ssl_certificate_arn = "arn:aws:acm:ap-southeast-1:account:certificate/..."
+```
+Then: `terraform apply -target=module.alb`
+
+**Option 2: Via environment variable**
+```bash
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:account:certificate/..."
+terraform apply -target=module.alb
+```
+
+**Option 3: Update existing ALB (add HTTPS to existing HTTP-only ALB)**
+```bash
+export TF_VAR_ssl_certificate_arn="..."
+terraform apply -target=module.alb
+```
+This adds HTTPS listener without recreating ALB.
+
+## 🩺 Health Check Configuration
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -122,7 +145,7 @@ _xxxxxxxx.devsecops.igunawan.com  →  _yyyyyyyy.acm-validations.aws.
 - Avoid heavy database queries or external API calls
 - Return 200 only when app is ready to serve traffic
 
-##  Monitoring & Logging
+## 📊 Monitoring & Logging
 
 Access logs are NOT enabled by default. To enable ALB access logs:
 
@@ -137,7 +160,7 @@ resource "aws_lb" "alb" {
 }
 ```
 
-##  Traffic Flow
+## 🔄 Traffic Flow
 
 ```
 User Request Flow:
@@ -191,8 +214,9 @@ HTTP requests (port 80) are automatically redirected to HTTPS (301) before reach
 - **Listener Priority**: HTTP→HTTPS redirect rule uses priority 1
 - **SSL Policy**: `ELBSecurityPolicy-2016-08` (TLS 1.2)
 - If `ssl_certificate_arn = null`, only HTTP listener is created (no HTTPS)
+- **Module Dependencies:** Must be applied after `module.vpc` and `module.sg`
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### ALB returns 502 Bad Gateway
 - Check target group health: unhealthy targets will cause 502
@@ -207,3 +231,9 @@ HTTP requests (port 80) are automatically redirected to HTTPS (301) before reach
 - Health check path must return 2xx/3xx status
 - ECS tasks must be listening on `target_group_port`
 - Security groups must allow health check traffic (from ALB IP ranges)
+
+### Cannot apply ALB module alone
+- Ensure VPC and Security Group modules are applied first:
+  ```bash
+  terraform apply -target=module.vpc -target=module.sg -target=module.alb
+  ```

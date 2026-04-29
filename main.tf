@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "ap-southeast-3"
+  region = "ap-southeast-1"
 }
 
 module "vpc" {
@@ -52,3 +52,33 @@ module "ecs" {
   target_group_arn      = module.alb.target_group_arn
   ecs_environment_variables = var.ecs_environment_variables
 }
+
+module "codebuild" {
+  source              = "./modules/codebuild"
+  project_name        = var.project_name
+  build_timeout       = var.build_timeout
+  build_compute_type  = var.build_compute_type
+  build_image         = var.build_image
+  aws_region          = var.aws_region
+  aws_account_id      = var.aws_account_id
+  image_repo_name     = var.image_repo_name
+  image_tag           = var.image_tag
+  buildspec           = var.buildspec
+  environment_variables = var.codebuild_environment_variables
+  tags                = var.tags
+}
+
+module "codepipeline" {
+  source                 = "./modules/codepipeline"
+  project_name           = var.project_name
+  aws_region             = var.aws_region
+  aws_account_id         = var.aws_account_id
+  github_oauth_token     = var.github_oauth_token
+  github_repository      = var.github_repository
+  github_branch          = var.github_branch
+  codebuild_project_name = module.codebuild.codebuild_project_name
+  ecs_cluster_name       = var.ecs_cluster_name
+  ecs_service_name       = var.ecs_service_name
+  tags                   = var.tags
+}
+

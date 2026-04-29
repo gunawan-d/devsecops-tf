@@ -5,20 +5,32 @@ Terraform infrastructure for deploying applications on AWS: **VPC → ALB (HTTPS
 ## 🚀 Quick Start
 
 ```bash
+# Initialize Terraform
 terraform init
+
+# Set SSL certificate (if using HTTPS)
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+
+# Apply all modules
 terraform apply
+
+# OR apply specific module only
+terraform apply -target=module.vpc
+terraform apply -target=module.sg
+terraform apply -target=module.alb
+terraform apply -target=module.ecs
 ```
 
 Access: `https://devsecops.igunawan.com`
 
-##  Modules
+## 📦 Modules
 
-| Module | Purpose |
-|--------|---------|
-| `modules/vpc` | VPC with 2 public + 2 private subnets (multi-AZ) |
-| `modules/security_group` | Firewall rules for ALB (80/443) and ECS (8080) |
-| `modules/alb` | Application Load Balancer with HTTPS + HTTP→HTTPS redirect |
-| `modules/ecs` | ECS Fargate cluster, service, task definition, IAM roles |
+| Module | Purpose | Apply Order |
+|--------|---------|-------------|
+| `modules/vpc` | VPC + 2 public + 2 private subnets | 1 (first) |
+| `modules/security_group` | Firewall rules for ALB & ECS | 2 (depends on VPC) |
+| `modules/alb` | Load balancer + HTTPS listener | 3 (depends on SG & VPC) |
+| `modules/ecs` | Fargate cluster + service | 4 (last, depends on all) |
 
 ## ⚙️ Configuration
 
@@ -31,26 +43,76 @@ public_subnet    = "10.0.0.0/22"
 public_subnet_b  = "10.0.4.0/22"
 private_subnet   = "10.0.8.0/22"
 private_subnet_b = "10.0.12.0/22"
-az               = "ap-southeast-3a"
-az_2             = "ap-southeast-3b"
+az               = "ap-southeast-1a"
+az_2             = "ap-southeast-1b"
 
 # Application
-ecs_container_image = "[ACCOUNT_ID].dkr.ecr.ap-southeast-3.amazonaws.com/apps-tf:development"
+ecs_container_image = "[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development"
 
 # SSL (optional - leave null for HTTP only)
-ssl_certificate_arn = "arn:aws:acm:ap-southeast-3:[ACCOUNT_ID]:certificate/[...]"
+ssl_certificate_arn = null  # Set via env var or update this value
 ```
 
-> **Note:** Replace `[ACCOUNT_ID]` with your AWS account ID. Keep `terraform.tfvars` out of version control if it contains sensitive values.
+### Setting Variables via Environment Variables
 
-##  SSL Setup
+Instead of editing `terraform.tfvars`, you can set variables via environment:
+
+```bash
+# Single variable
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+
+# Multiple variables
+export TF_VAR_ecs_container_image="[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development"
+export TF_VAR_vpc_cidr="10.0.0.0/16"
+
+# Then apply
+terraform apply
+```
+
+Environment variables override values in `terraform.tfvars`.
+
+### Applying Specific Modules
+
+Use `-target` flag to apply only specific modules (useful for incremental changes):
+
+```bash
+# Apply only VPC module
+terraform apply -target=module.vpc
+
+# Apply VPC and Security Groups (dependency order matters)
+terraform apply -target=module.vpc -target=module.sg
+
+# Apply only ECS (rebuild tasks without affecting ALB/VPC)
+terraform apply -target=module.ecs
+
+# Apply only ALB (add HTTPS listener without touching ECS)
+terraform apply -target=module.alb
+```
+
+**Note:** `-target` breaks dependency tracking. Use with caution. For full deployments, run `terraform apply` without targets.
+
+## 🔐 SSL Setup
+
+### Method 1: Manual ACM + Terraform (Recommended for Cloudflare)
 
 1. Request ACM certificate for `devsecops.igunawan.com` (DNS validation)
 2. Add CNAME validation record in Cloudflare (**DNS Only**, grey cloud)
-3. After certificate status = **Issued**, run `terraform apply`
-4. HTTP automatically redirects to HTTPS
+3. Wait for certificate status = **ISSUED**
+4. Set certificate ARN:
+   ```bash
+   export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+   ```
+5. Apply ALB module:
+   ```bash
+   terraform apply -target=module.alb
+   ```
+6. HTTP automatically redirects to HTTPS
 
-##  Project Structure
+### Method 2: Terraform-managed ACM (Route53 only)
+
+If using Route53 for DNS, you can manage ACM certificate entirely in Terraform (see ALB module README for full example).
+
+## 📁 Project Structure
 
 ```
 devsecops-tf/
@@ -67,7 +129,7 @@ devsecops-tf/
 └── README.md            # This file
 ```
 
-##  Troubleshooting
+## 🆘 Troubleshooting
 
 **ALB health checks failing?**  
 Check target group health: `aws elbv2 describe-target-health --target-group-arn $(terraform output -raw target_group_arn)`
@@ -82,10 +144,35 @@ Verify ECR image exists and IAM roles have permissions.
 **HTTPS not working?**  
 Confirm ALB security group allows port 443 (included in module).
 
-##  Cleanup
+## 🧹 Cleanup
 
+### Destroy all resources
 ```bash
 terraform destroy
 ```
 
-This will delete all AWS resources (VPC, ALB, ECS, etc.).
+### Destroy specific module only
+```bash
+terraform destroy -target=module.ecs    # Delete ECS tasks first
+terraform destroy -target=module.alb   # Then ALB
+terraform destroy -target=module.sg    # Then security groups
+terraform destroy -target=module.vpc   # Finally VPC
+```
+
+**Warning:** Order matters! Destroy ECS before ALB, ALB before SG, SG before VPC to avoid dependency errors.
+
+## 📝 Variable Reference
+
+See individual module READMEs for detailed variable documentation.
+
+## 🔧 Common Commands
+
+| Command | Description |
+|---------|-------------|
+| `terraform init` | Initialize Terraform configuration |
+| `terraform plan` | Preview changes |
+| `terraform apply` | Apply all changes |
+| `terraform apply -target=module.X` | Apply only specific module |
+| `terraform destroy` | Destroy all resources |
+| `terraform state list` | List resources in state |
+| `terraform output` | Show output values |

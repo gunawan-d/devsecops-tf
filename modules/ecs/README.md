@@ -2,7 +2,7 @@
 
 Creates an Amazon ECS cluster with Fargate launch type, task definition, service, IAM roles, and CloudWatch logging integration.
 
-##  Resources Created
+## 🏗️ Resources Created
 
 ### Compute Resources
 - **`aws_ecs_cluster.main`** - ECS cluster with Container Insights enabled
@@ -17,7 +17,7 @@ Creates an Amazon ECS cluster with Fargate launch type, task definition, service
 ### Logging Resources
 - **`aws_cloudwatch_log_group.ecs`** - CloudWatch Logs group with 30-day retention
 
-##  Input Variables
+## 📥 Input Variables
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -25,7 +25,7 @@ Creates an Amazon ECS cluster with Fargate launch type, task definition, service
 | `ecs_task_family` | `string` | Yes | - | Family name for task definition (used in log group path) |
 | `ecs_service_name` | `string` | Yes | - | Name of the ECS service |
 | `ecs_container_name` | `string` | Yes | - | Container name within the task |
-| `ecs_container_image` | `string` | Yes | - | ECR image URI (e.g., `[ACCOUNT_ID].dkr.ecr.ap-southeast-3.amazonaws.com/repo:tag`) |
+| `ecs_container_image` | `string` | Yes | - | ECR image URI (e.g., `[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/repo:tag`) |
 | `ecs_container_port` | `number` | Yes | - | Container port that application listens on |
 | `ecs_task_cpu` | `string` | Yes | - | CPU units for task (valid: "256", "512", "1024", "2048") |
 | `ecs_task_memory` | `string` | Yes | - | Memory in MiB (valid: "512", "1024", "2048", "4096", etc.) |
@@ -36,7 +36,7 @@ Creates an Amazon ECS cluster with Fargate launch type, task definition, service
 | `ecs_security_group_id` | `string` | Yes | - | ECS security group ID (from security_group module) |
 | `target_group_arn` | `string` | Yes | - | ALB target group ARN (from ALB module) |
 
-##  Outputs
+## 🔗 Outputs
 
 | Name | Description |
 |------|-------------|
@@ -46,7 +46,7 @@ Creates an Amazon ECS cluster with Fargate launch type, task definition, service
 | `ecs_service_name` | Name of the ECS service |
 | `ecs_task_definition_arn` | ARN of the task definition |
 
-##  Task Definition JSON
+## 📋 Task Definition JSON
 
 The module generates the following container definition:
 
@@ -62,7 +62,7 @@ The module generates the following container definition:
   "containerDefinitions": [
     {
       "name": "app-tf",
-      "image": "[ACCOUNT_ID].dkr.ecr.ap-southeast-3.amazonaws.com/apps-tf:development",
+      "image": "[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -77,7 +77,7 @@ The module generates the following container definition:
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/development/app-task",
-          "awslogs-region": "ap-southeast-3",
+          "awslogs-region": "ap-southeast-1",
           "awslogs-stream-prefix": "ecs"
         }
       },
@@ -87,7 +87,7 @@ The module generates the following container definition:
 }
 ```
 
-##  Usage Example
+## 💡 Usage Example
 
 ```hcl
 module "ecs" {
@@ -97,12 +97,12 @@ module "ecs" {
   ecs_task_family       = "app-task"
   ecs_service_name      = "app-service"
   ecs_container_name    = "app-tf"
-  ecs_container_image   = "[ACCOUNT_ID].dkr.ecr.ap-southeast-3.amazonaws.com/apps-tf:development"
+  ecs_container_image   = "[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development"
   ecs_container_port    = 8080
   ecs_task_cpu          = "256"
   ecs_task_memory       = "512"
   ecs_desired_count     = 2
-  aws_region            = "ap-southeast-3"
+  aws_region            = "ap-southeast-1"
   private_subnet_ids    = module.vpc.private_subnet_ids
   ecs_security_group_id = module.sg.ecs_sg_id
   target_group_arn      = module.alb.target_group_arn
@@ -114,7 +114,7 @@ module "ecs" {
 }
 ```
 
-##  IAM Roles & Permissions
+## 🔐 IAM Roles & Permissions
 
 ### Execution Role (`ecs_execution_role`)
 **Attached Policy:** `AmazonECSTaskExecutionRolePolicy` (AWS managed)
@@ -137,7 +137,7 @@ resource "aws_iam_role_policy_attachment" "s3_access" {
 }
 ```
 
-##  Monitoring & Logs
+## 📊 Monitoring & Logs
 
 ### CloudWatch Logs
 - **Log Group**: `/ecs/development/<ecs_task_family>`
@@ -153,7 +153,7 @@ resource "aws_iam_role_policy_attachment" "s3_access" {
 aws logs get-log-events \
   --log-group-name "/ecs/development/app-task" \
   --log-stream-name "ecs/container-id" \
-  --region ap-southeast-3
+  --region ap-southeast-1
 ```
 
 ### ECS Console
@@ -162,7 +162,7 @@ View tasks, services, cluster state:
 - **Service**: `app-service`
 - **Task Definition**: `app-task`
 
-##  Health Checks
+## 🩺 Health Checks
 
 Health checks are performed by the ALB target group:
 
@@ -170,7 +170,7 @@ Health checks are performed by the ALB target group:
 Health Check Flow:
 ┌──────────┐
 │   ALB    │
-│          │ 1. GET http://<task-ip>:8080/health
+│           │ 1. GET http://<task-ip>:8080/health
 └─────┬────┘
       │
       ▼
@@ -192,7 +192,7 @@ Health Check Flow:
 
 **Task must:** Respond quickly (<5s timeout) to health checks or it will be marked unhealthy.
 
-##  Service Lifecycle
+## 🔄 Service Lifecycle
 
 - **Desired Count**: 2 tasks (configurable via `ecs_desired_count`)
 - **Launch Type**: FARGATE (serverless, no EC2 management)
@@ -200,7 +200,7 @@ Health Check Flow:
 - **Deployment**: Rolling update (default), can configure deployment circuit breaker
 - **Auto-Scaling**: Not configured by default (can be added separately)
 
-##  Common Issues & Solutions
+## 🚨 Common Issues & Solutions
 
 ### Tasks stuck in `PROVISIONING` or `PENDING`
 - **Check**: IAM execution role permissions
@@ -221,14 +221,14 @@ Health Check Flow:
 - **Check**: ECR repository policy allows execution role
 - **Check**: Image URI is correct (region, account, repo, tag)
 
-##  Fargate Platform Version
+## ⚙️ Fargate Platform Version
 
 Uses **LATEST** platform version by default (recommended). Capabilities:
 - `awsvpc` networking (each task gets ENI)
 - PCI DSS, HIPAA, SOC, ISO compliance
 - Graviton2/AMD64/ARM64 support (depends on image architecture)
 
-##  Scaling Considerations
+## 📈 Scaling Considerations
 
 To add auto-scaling:
 
@@ -257,9 +257,13 @@ resource "aws_appautoscaling_policy" "ecs" {
 }
 ```
 
-##  Cleanup
+## 🧹 Cleanup
 
 ```bash
+# Destroy ECS module only (recommended order: ECS first)
+terraform destroy -target=module.ecs
+
+# Destroy all modules
 terraform destroy
 ```
 
@@ -270,7 +274,7 @@ terraform destroy
 4. CloudWatch log group (optional)
 5. VPC, ALB, security groups (via other modules)
 
-##  Dependencies
+## 🔗 Dependencies
 
 This module depends on:
 - `modules/vpc` - provides `private_subnet_ids`
@@ -283,4 +287,15 @@ module "vpc"       # First
 module "sg"        # Second (needs vpc_id)
 module "alb"       # Third (needs vpc_id, sg)
 module "ecs"       # Last (needs all above)
+```
+
+**Apply command with dependencies:**
+```bash
+# Apply dependencies first
+terraform apply -target=module.vpc
+terraform apply -target=module.sg
+terraform apply -target=module.alb
+
+# Then apply ECS
+terraform apply -target=module.ecs
 ```

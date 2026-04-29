@@ -2,7 +2,7 @@
 
 Creates a complete Virtual Private Cloud (VPC) infrastructure with public and private subnets across two Availability Zones.
 
-##  Resources Created
+## 🏗️ Resources Created
 
 - **AWS VPC** - Main VPC with configurable CIDR
 - **Public Subnets** (2) - For load balancers and public resources
@@ -12,7 +12,7 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
 - **Route Tables** - Public (IGW route) and Private (NAT route)
 - **Route Table Associations** - Associates all subnets with their respective route tables
 
-##  Input Variables
+## 📥 Input Variables
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -21,10 +21,10 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
 | `public_subnet_b` | `string` | Yes | - | CIDR block for second public subnet (AZ-b) |
 | `private_subnet` | `string` | Yes | - | CIDR block for first private subnet (AZ-a) |
 | `private_subnet_b` | `string` | Yes | - | CIDR block for second private subnet (AZ-b) |
-| `az` | `string` | Yes | - | First Availability Zone (e.g., "ap-southeast-3a") |
-| `az_2` | `string` | Yes | - | Second Availability Zone (e.g., "ap-southeast-3b") |
+| `az` | `string` | Yes | - | First Availability Zone (e.g., "ap-southeast-1a") |
+| `az_2` | `string` | Yes | - | Second Availability Zone (e.g., "ap-southeast-1b") |
 
-## Outputs
+## 🔗 Outputs
 
 | Name | Description |
 |------|-------------|
@@ -32,7 +32,7 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
 | `public_subnet_ids` | List of public subnet IDs (2 subnets) |
 | `private_subnet_ids` | List of private subnet IDs (2 subnets) |
 
-##  Network Architecture
+## 🗺️ Network Architecture
 
 ```
                             ┌─────────────────────┐
@@ -45,17 +45,17 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
                                        │
                     ┌──────────────────┴──────────────────┐
                     │       Public Subnets                │
-                    │  ┌─────────────────────────────┐    │
-                    │  │  Public Subnet A            │    │
-                    │  │  10.0.0.0/22                │    │
-                    │  │  └─► ALB (AZ-a)             │    │
-                    │  └─────────────────────────────┘    │
-                    │  ┌─────────────────────────────┐    │
-                    │  │  Public Subnet B            │    │
-                    │  │  10.0.4.0/22                │    │
-                    │  │  └─► ALB (AZ-b)             │    │
-                    │  └─────────────────────────────┘    │
-                    └──────────────────┬─────────────────-┘
+                    │  ┌─────────────────────────────┐   │
+                    │  │  Public Subnet A            │   │
+                    │  │  10.0.0.0/22               │   │
+                    │  │  └─► ALB (AZ-a)            │   │
+                    │  └─────────────────────────────┘   │
+                    │  ┌─────────────────────────────┐   │
+                    │  │  Public Subnet B            │   │
+                    │  │  10.0.4.0/22               │   │
+                    │  │  └─► ALB (AZ-b)            │   │
+                    │  └─────────────────────────────┘   │
+                    └──────────────────┬─────────────────┘
                                        │
                     ┌──────────────────▼──────────────────┐
                     │     NAT Gateway (single-AZ)         │
@@ -63,20 +63,20 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
                                        │
                     ┌──────────────────▼──────────────────┐
                     │       Private Subnets               │
-                    │  ┌─────────────────────────────┐    │
-                    │  │  Private Subnet A           │    │
-                    │  │  10.0.8.0/22                │    │
-                    │  │  └─► ECS Tasks (AZ-a)       │←── ┘
+                    │  ┌─────────────────────────────┐   │
+                    │  │  Private Subnet A           │   │
+                    │  │  10.0.8.0/22               │   │
+                    │  │  └─► ECS Tasks (AZ-a)      │←──┘
                     │  └─────────────────────────────┘
                     │  ┌─────────────────────────────┐
-                    │  │  Private Subnet B           │   |
-                    │  │  10.0.12.0/22               │   |
-                    │  │  └─► ECS Tasks (AZ-b)       │   |
-                    │  └─────────────────────────────┘   |
+                    │  │  Private Subnet B           │
+                    │  │  10.0.12.0/22              │
+                    │  │  └─► ECS Tasks (AZ-b)      │
+                    │  └─────────────────────────────┘
                     └────────────────────────────────────┘
 ```
 
-##  Usage Example
+## 💡 Usage Example
 
 ```hcl
 module "vpc" {
@@ -87,12 +87,33 @@ module "vpc" {
   public_subnet_b  = "10.0.4.0/22"
   private_subnet   = "10.0.8.0/22"
   private_subnet_b = "10.0.12.0/22"
-  az               = "ap-southeast-3a"
-  az_2             = "ap-southeast-3b"
+  az               = "ap-southeast-1a"
+  az_2             = "ap-southeast-1b"
 }
 ```
 
-##  Design Decisions
+## 🚀 Applying This Module
+
+### First module to apply
+The VPC module is the foundation - it must be applied first before any other module:
+
+```bash
+# Apply only VPC module
+terraform apply -target=module.vpc
+
+# Apply VPC then all other modules
+terraform apply -target=module.vpc
+terraform apply
+```
+
+### View outputs after apply
+```bash
+terraform output vpc_id
+terraform output public_subnet_ids
+terraform output private_subnet_ids
+```
+
+## 📋 Design Decisions
 
 - **Single NAT Gateway**: Deployed in public subnet-a for cost optimization. Suitable for dev/staging. For production, consider NAT Gateway per AZ for high availability.
 - **Public Subnets**: Used for internet-facing resources (ALB, bastion hosts)
@@ -100,15 +121,26 @@ module "vpc" {
 - **CIDR Allocation**: VPC /16 → Subnets /22 (each provides 1024 IP addresses, 5 reserved by AWS)
 - **Multi-AZ**: Subnets distributed across two AZs for redundancy
 
-##  Security Considerations
+## 🔐 Security Considerations
 
 - Private subnets have no direct internet ingress (only outbound via NAT)
 - ALB in public subnets with security group restrictions
 - Resources in private subnets use internal IPs only
 
-##  Notes
+## ⚠️ Notes
 
 - Ensure CIDR blocks do not overlap with existing networks
 - Public subnets must have `map_public_ip_on_launch = true` for ALB
 - Private subnets have `map_public_ip_on_launch = false`
 - NAT Gateway incurs hourly cost; consider using NAT instances for cost savings in non-production
+
+## 🔄 Dependencies
+
+This module has **no dependencies** on other Terraform modules. It is the foundational network layer.
+
+**Dependent modules:**
+- `modules/security_group` (requires `vpc_id`)
+- `modules/alb` (requires `public_subnet_ids`)
+- `modules/ecs` (requires `private_subnet_ids`)
+
+**Apply order reminder:** Always apply VPC first, then other modules.
