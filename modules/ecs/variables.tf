@@ -1,0 +1,14 @@
+variable "ecs_cluster_name" {}
+variable "ecs_task_family" {}
+variable "ecs_service_name" {}
+variable "ecs_container_name" {}
+variable "ecs_container_image" {}
+variable "ecs_container_port" {}
+variable "ecs_task_cpu" {}
+variable "ecs_task_memory" {}
+variable "ecs_desired_count" {}
+variable "aws_region" {}
+variable "private_subnet_ids" {}
+variable "ecs_security_group_id" {}
+variable "target_group_arn" {}
+variable "ecs_environment_variables" {}

@@ -1,0 +1,10 @@
+variable "vpc_id" {}
+variable "public_subnet_ids" {}
+variable "security_group_id" {}
+variable "alb_name" {}
+variable "target_group_name" {}
+variable "target_group_port" {}
+variable "target_group_protocol" {}
+variable "health_check_path" {}
+variable "health_check_matcher" {}
+variable "ssl_certificate_arn" {}
