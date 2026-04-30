@@ -50,7 +50,7 @@ variable "buildspec" {
 
 variable "environment_variables" {
   description = "Additional environment variables for CodeBuild"
-  type        = list(object({
+  type = list(object({
     name  = string
     value = string
   }))

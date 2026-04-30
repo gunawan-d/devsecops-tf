@@ -31,7 +31,7 @@ variable "ecs_container_port" {}
 variable "aws_region" {}
 variable "ecs_environment_variables" {
   description = "Environment variables for the ECS container"
-  type        = list(object({
+  type = list(object({
     name  = string
     value = string
   }))
@@ -41,7 +41,7 @@ variable "ecs_environment_variables" {
 variable "ssl_certificate_arn" {
   description = "ACM SSL certificate ARN"
   type        = string
-  default     = null  # Optional - can be null for HTTP-only
+  default     = null # Optional - can be null for HTTP-only
 }
 
 ### CodeBuild and CodePipeline Variables ###
@@ -92,7 +92,7 @@ variable "buildspec" {
 
 variable "codebuild_environment_variables" {
   description = "Environment variables for CodeBuild"
-  type        = list(object({
+  type = list(object({
     name  = string
     value = string
   }))
@@ -120,7 +120,7 @@ variable "github_branch" {
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)
-  default     = {
+  default = {
     Environment = "dev"
     ManagedBy   = "terraform"
   }
