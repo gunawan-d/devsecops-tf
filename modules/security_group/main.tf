@@ -1,6 +1,6 @@
 resource "aws_security_group" "alb" {
   name        = var.alb_sg_name
-  description = "ALB security group"
+  description = "ALB security group - allows HTTP/HTTPS from internet"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -24,14 +24,12 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = var.alb_sg_name
-  }
+  tags = merge(var.tags, { Name = var.alb_sg_name })
 }
 
 resource "aws_security_group" "ecs" {
   name        = var.ecs_sg_name
-  description = "ECS task security group"
+  description = "ECS task security group - only allows traffic from ALB"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -48,7 +46,5 @@ resource "aws_security_group" "ecs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = var.ecs_sg_name
-  }
+  tags = merge(var.tags, { Name = var.ecs_sg_name })
 }

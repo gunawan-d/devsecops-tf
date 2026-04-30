@@ -26,15 +26,15 @@ Creates an Amazon ECS cluster with Fargate launch type, task definition, service
 | `ecs_service_name` | `string` | Yes | - | Name of the ECS service |
 | `ecs_container_name` | `string` | Yes | - | Container name within the task |
 | `ecs_container_image` | `string` | Yes | - | ECR image URI (e.g., `[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/repo:tag`) |
-| `ecs_container_port` | `number` | Yes | - | Container port that application listens on |
+| `ecs_container_port` | `number` | Yes | - | Container port that application listens on (1-65535) |
 | `ecs_task_cpu` | `string` | Yes | - | CPU units for task (valid: "256", "512", "1024", "2048") |
-| `ecs_task_memory` | `string` | Yes | - | Memory in MiB (valid: "512", "1024", "2048", "4096", etc.) |
+| `ecs_task_memory` | `string` | Yes | - | Memory in MiB (valid: "512", "1024", "2048", "4096", "8192", "16384") |
 | `ecs_desired_count` | `number` | No | `2` | Number of tasks to run simultaneously |
-| `ecs_environment_variables` | `list(object)` | No | `[]` | List of environment variables: `[{name="KEY", value="value"}]` |
-| `aws_region` | `string` | Yes | - | AWS region for CloudWatch logs |
 | `private_subnet_ids` | `list(string)` | Yes | - | Private subnet IDs for task ENIs (from VPC module) |
 | `ecs_security_group_id` | `string` | Yes | - | ECS security group ID (from security_group module) |
 | `target_group_arn` | `string` | Yes | - | ALB target group ARN (from ALB module) |
+| `ecs_environment_variables` | `list(object)` | No | `[]` | List of environment variables: `[{name="KEY", value="value"}]` |
+| `tags` | `map(string)` | No | `{}` | Global tags applied to all ECS resources (cluster, service, task definition, IAM roles, logs). Resource-specific Name tags added automatically. |
 
 ## 🔗 Outputs
 

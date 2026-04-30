@@ -24,12 +24,12 @@ output "ecs_sg_id" {
 }
 
 output "alb_dns_name" {
-  description = "ALB DNS name"
+  description = "ALB DNS name (use for Cloudflare CNAME)"
   value       = module.alb.alb_dns_name
 }
 
-output "alb_zone_id" {
-  description = "ALB Zone ID"
+output "target_group_arn" {
+  description = "Target group ARN (used by ECS service)"
   value       = module.alb.target_group_arn
 }
 
@@ -43,8 +43,8 @@ output "ecs_service_id" {
   value       = module.ecs.service_id
 }
 
-output "ecs_service_arn" {
-  description = "ECS service ARN"
+output "ecs_task_definition_arn" {
+  description = "ECS task definition ARN"
   value       = module.ecs.task_definition_arn
 }
 
@@ -69,6 +69,6 @@ output "codepipeline_name" {
 }
 
 output "codepipeline_s3_bucket" {
-  description = "CodePipeline S3 bucket name"
+  description = "CodePipeline S3 bucket name for artifacts"
   value       = module.codepipeline.s3_bucket_name
 }

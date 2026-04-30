@@ -1,3 +1,6 @@
+# Get current AWS region for CloudWatch logs
+data "aws_region" "current" {}
+
 resource "aws_ecs_cluster" "main" {
   name = var.ecs_cluster_name
 
@@ -6,11 +9,11 @@ resource "aws_ecs_cluster" "main" {
     value = "enabled"
   }
 
-  tags = {
+  tags = merge({
     Name        = var.ecs_cluster_name
-    Environment = "development"
-    Namespace   = "development"
-  }
+    Environment = lookup(var.tags, "Environment", "development")
+    Namespace   = lookup(var.tags, "Namespace", "development")
+  }, var.tags)
 }
 
 resource "aws_ecs_task_definition" "app" {
@@ -40,8 +43,8 @@ resource "aws_ecs_task_definition" "app" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/development/${var.ecs_task_family}"
-          "awslogs-region"        = var.aws_region
+          "awslogs-group"         = "/ecs/${lookup(var.tags, "Environment", "development")}/${var.ecs_task_family}"
+          "awslogs-region"        = data.aws_region.current.name
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -50,11 +53,11 @@ resource "aws_ecs_task_definition" "app" {
     }
   ])
 
-  tags = {
+  tags = merge({
     Name        = var.ecs_task_family
-    Environment = "development"
-    Namespace   = "development"
-  }
+    Environment = lookup(var.tags, "Environment", "development")
+    Namespace   = lookup(var.tags, "Namespace", "development")
+  }, var.tags)
 }
 
 resource "aws_ecs_service" "app" {
@@ -78,11 +81,11 @@ resource "aws_ecs_service" "app" {
 
   depends_on = [aws_iam_role_policy_attachment.ecs_execution_role_policy]
 
-  tags = {
+  tags = merge({
     Name        = var.ecs_service_name
-    Environment = "development"
-    Namespace   = "development"
-  }
+    Environment = lookup(var.tags, "Environment", "development")
+    Namespace   = lookup(var.tags, "Namespace", "development")
+  }, var.tags)
 }
 
 resource "aws_iam_role" "ecs_execution_role" {
@@ -101,11 +104,11 @@ resource "aws_iam_role" "ecs_execution_role" {
     ]
   })
 
-  tags = {
+  tags = merge({
     Name        = "${var.ecs_cluster_name}-execution-role"
-    Environment = "development"
-    Namespace   = "development"
-  }
+    Environment = lookup(var.tags, "Environment", "development")
+    Namespace   = lookup(var.tags, "Namespace", "development")
+  }, var.tags)
 }
 
 resource "aws_iam_role" "ecs_task_role" {
@@ -124,11 +127,11 @@ resource "aws_iam_role" "ecs_task_role" {
     ]
   })
 
-  tags = {
+  tags = merge({
     Name        = "${var.ecs_cluster_name}-task-role"
-    Environment = "development"
-    Namespace   = "development"
-  }
+    Environment = lookup(var.tags, "Environment", "development")
+    Namespace   = lookup(var.tags, "Namespace", "development")
+  }, var.tags)
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
@@ -137,12 +140,12 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
 }
 
 resource "aws_cloudwatch_log_group" "ecs" {
-  name              = "/ecs/development/${var.ecs_task_family}"
+  name              = "/ecs/${lookup(var.tags, "Environment", "development")}/${var.ecs_task_family}"
   retention_in_days = 30
 
-  tags = {
+  tags = merge({
     Name        = var.ecs_task_family
-    Environment = "development"
-    Namespace   = "development"
-  }
+    Environment = lookup(var.tags, "Environment", "development")
+    Namespace   = lookup(var.tags, "Namespace", "development")
+  }, var.tags)
 }

@@ -5,9 +5,7 @@ resource "aws_lb" "alb" {
   security_groups    = [var.security_group_id]
   subnets            = var.public_subnet_ids
 
-  tags = {
-    Name = var.alb_name
-  }
+  tags = merge(var.tags, { Name = var.alb_name })
 }
 
 resource "aws_lb_target_group" "tg" {
@@ -27,9 +25,7 @@ resource "aws_lb_target_group" "tg" {
     unhealthy_threshold = 2
   }
 
-  tags = {
-    Name = var.target_group_name
-  }
+  tags = merge(var.tags, { Name = var.target_group_name })
 }
 
 resource "aws_lb_listener" "http" {
@@ -56,7 +52,8 @@ resource "aws_lb_listener" "https" {
     target_group_arn = aws_lb_target_group.tg.arn
   }
 }
-# Optional HTTP→HTTPS redirect
+
+# Optional HTTP→HTTPS redirect rule (only if SSL enabled)
 resource "aws_lb_listener_rule" "http_to_https" {
   count        = var.ssl_certificate_arn != null ? 1 : 0
   listener_arn = aws_lb_listener.http.arn

@@ -28,9 +28,10 @@ Security group for ECS tasks that only allows traffic from the ALB.
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `vpc_id` | `string` | Yes | - | ID of the VPC where security groups will be created |
-| `app_port` | `number` | Yes | - | Application container port on ECS tasks (default: 8080) |
+| `app_port` | `number` | Yes | - | Application container port on ECS tasks (1-65535) |
 | `alb_sg_name` | `string` | No | `"alb-sg"` | Name tag for ALB security group |
 | `ecs_sg_name` | `string` | No | `"ecs-sg"` | Name tag for ECS security group |
+| `tags` | `map(string)` | No | `{}` | Global tags applied to both security groups (Name tags set by module) |
 
 ## 🔗 Outputs
 

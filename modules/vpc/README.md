@@ -16,13 +16,14 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `vpc_cidr` | `string` | Yes | - | CIDR block for the VPC (e.g., "10.0.0.0/16") |
-| `public_subnet` | `string` | Yes | - | CIDR block for first public subnet (AZ-a) |
-| `public_subnet_b` | `string` | Yes | - | CIDR block for second public subnet (AZ-b) |
-| `private_subnet` | `string` | Yes | - | CIDR block for first private subnet (AZ-a) |
-| `private_subnet_b` | `string` | Yes | - | CIDR block for second private subnet (AZ-b) |
-| `az` | `string` | Yes | - | First Availability Zone (e.g., "us-east-1a") |
-| `az_2` | `string` | Yes | - | Second Availability Zone (e.g., "us-east-1b") |
+| `vpc_cidr` | `string` | Yes | - | CIDR block for the VPC (e.g., "10.0.0.0/16"). Valid CIDR format. |
+| `public_subnet` | `string` | Yes | - | CIDR block for first public subnet (AZ-a). |
+| `public_subnet_b` | `string` | Yes | - | CIDR block for second public subnet (AZ-b). |
+| `private_subnet` | `string` | Yes | - | CIDR block for first private subnet (AZ-a). |
+| `private_subnet_b` | `string` | Yes | - | CIDR block for second private subnet (AZ-b). |
+| `az` | `string` | Yes | - | First Availability Zone (e.g., "us-east-1a"). Auto-detected if not provided via data source in root. |
+| `az_2` | `string` | Yes | - | Second Availability Zone (e.g., "us-east-1b"). Auto-detected if not provided. |
+| `tags` | `map(string)` | No | `{}` | Global tags to apply to all VPC resources (VPC, subnets, IGW, NAT, route tables). Resource-specific Name tags are added automatically. |
 
 ## 🔗 Outputs
 

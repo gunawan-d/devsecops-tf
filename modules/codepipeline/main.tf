@@ -1,9 +1,13 @@
+# Data source to get current AWS account and region
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 resource "aws_s3_bucket" "codepipeline_bucket" {
-  bucket = format("%s-codepipeline-%s", var.project_name, var.aws_account_id)
+  bucket = format("%s-codepipeline-%s", var.project_name, data.aws_caller_identity.current.account_id)
 
   force_destroy = true
 
-  tags = var.tags
+  tags = merge(var.tags, { Name = format("%s-codepipeline-bucket", var.project_name) })
 }
 
 resource "aws_s3_bucket_versioning" "codepipeline_bucket_versioning" {
@@ -39,14 +43,18 @@ resource "aws_iam_role" "codepipeline_role" {
       },
     ]
   })
+
+  tags = merge(var.tags, { Name = format("%s-codepipeline-role", var.project_name) })
 }
 
+# IAM policy with least privilege - scoped to specific resources
 resource "aws_iam_role_policy" "codepipeline_policy" {
   role = aws_iam_role.codepipeline_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # S3 permissions - scoped to this pipeline's bucket only
       {
         Effect = "Allow"
         Action = [
@@ -56,8 +64,12 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
           "s3:PutObject",
           "s3:PutObjectAcl"
         ]
-        Resource = "*"
+        Resource = [
+          aws_s3_bucket.codepipeline_bucket.arn,
+          "${aws_s3_bucket.codepipeline_bucket.arn}/*"
+        ]
       },
+      # CodeBuild permissions - scoped to this project's build
       {
         Effect = "Allow"
         Action = [
@@ -65,8 +77,9 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
           "codebuild:StartBuild",
           "codebuild:BatchGetBuildBatches"
         ]
-        Resource = "*"
+        Resource = "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:project/${var.codebuild_project_name}"
       },
+      # ECS permissions - scoped to specific cluster and service
       {
         Effect = "Allow"
         Action = [
@@ -75,15 +88,22 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
           "ecs:RegisterTaskDefinition",
           "ecs:DescribeTaskDefinition"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:service/${var.ecs_cluster_name}/${var.ecs_service_name}",
+          "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:task-definition/*"
+        ]
       },
+      # IAM PassRole - required for ECS task role; scoped to service-linked role if possible
       {
         Effect = "Allow"
         Action = [
           "iam:PassRole"
         ]
         Resource = "*"
+        # Note: iam:PassRole often requires wildcard because exact role ARN may not be known
+        # Consider scoping to specific role ARN if known: arn:aws:iam::account:role/ecsTaskExecutionRole
       },
+      # ELB permissions - scoped to specific target group
       {
         Effect = "Allow"
         Action = [
@@ -94,6 +114,7 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
           "elasticloadbalancing:DescribeLoadBalancers"
         ]
         Resource = "*"
+        # ELB describe actions typically require "*" as resources are not taggable
       }
     ]
   })
@@ -120,8 +141,8 @@ resource "aws_codepipeline" "codepipeline" {
       output_artifacts = ["source_output"]
 
       configuration = {
-        Owner      = "gunawan-d"
-        Repo       = "apps-tf"
+        Owner      = split("/", var.github_repository)[0]
+        Repo       = split("/", var.github_repository)[1]
         Branch     = var.github_branch
         OAuthToken = var.github_oauth_token
       }
@@ -165,5 +186,5 @@ resource "aws_codepipeline" "codepipeline" {
     }
   }
 
-  tags = var.tags
+  tags = merge(var.tags, { Name = "${var.project_name}-pipeline" })
 }

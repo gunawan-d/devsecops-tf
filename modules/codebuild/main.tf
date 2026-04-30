@@ -1,3 +1,7 @@
+# Data source to get current AWS account and region information
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 resource "aws_iam_role" "codebuild_role" {
   name = format("%s-codebuild-role", var.project_name)
 
@@ -13,14 +17,18 @@ resource "aws_iam_role" "codebuild_role" {
       },
     ]
   })
+
+  tags = merge(var.tags, { Name = format("%s-codebuild-role", var.project_name) })
 }
 
+# IAM policy with least privilege - scoped to specific resources
 resource "aws_iam_role_policy" "codebuild_policy" {
   role = aws_iam_role.codebuild_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # CloudWatch Logs permissions - scoped to this project's log group
       {
         Effect = "Allow"
         Action = [
@@ -28,18 +36,15 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "*"
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/codebuild/${var.project_name}*"
       },
+      # ECR permissions - scoped to specific repository
       {
         Effect = "Allow"
         Action = [
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
-          "ecr:GetRepositoryPolicy",
-          "ecr:DescribeRepositories",
-          "ecr:ListImages",
-          "ecr:DescribeImages",
           "ecr:BatchGetImage",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
@@ -47,7 +52,9 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "ecr:PutImage"
         ]
         Resource = "*"
+        # ECR token-based actions require "*" resource
       },
+      # S3 permissions - scoped to CodePipeline bucket (will be created by CodePipeline module)
       {
         Effect = "Allow"
         Action = [
@@ -56,15 +63,19 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "s3:PutObject",
           "s3:GetBucketLocation"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-codepipeline-${data.aws_caller_identity.current.account_id}",
+          "arn:aws:s3:::${var.project_name}-codepipeline-${data.aws_caller_identity.current.account_id}/*"
+        ]
       },
+      # CodeBuild BatchGetBuilds and StartBuild - scoped to this project
       {
         Effect = "Allow"
         Action = [
           "codebuild:BatchGetBuilds",
           "codebuild:StartBuild"
         ]
-        Resource = "*"
+        Resource = "arn:aws:codebuild:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:project/${var.project_name}-codebuild"
       }
     ]
   })
@@ -88,12 +99,12 @@ resource "aws_codebuild_project" "codebuild" {
 
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
-      value = var.aws_region
+      value = data.aws_region.current.name
     }
 
     environment_variable {
       name  = "AWS_ACCOUNT_ID"
-      value = var.aws_account_id
+      value = data.aws_caller_identity.current.account_id
     }
 
     environment_variable {
@@ -128,5 +139,5 @@ resource "aws_codebuild_project" "codebuild" {
     }
   }
 
-  tags = var.tags
+  tags = merge(var.tags, { Name = format("%s-codebuild", var.project_name) })
 }

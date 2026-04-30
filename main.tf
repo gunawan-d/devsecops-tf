@@ -2,6 +2,11 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Data Sources - automatically retrieve AWS account, region, and AZs
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+data "aws_availability_zones" "available" {}
+
 module "vpc" {
   source           = "./modules/vpc"
   vpc_cidr         = var.vpc_cidr
@@ -9,8 +14,9 @@ module "vpc" {
   public_subnet_b  = var.public_subnet_b
   private_subnet   = var.private_subnet
   private_subnet_b = var.private_subnet_b
-  az               = var.az
-  az_2             = var.az_2
+  az               = data.aws_availability_zones.available.names[0]
+  az_2             = data.aws_availability_zones.available.names[1]
+  tags             = var.tags
 }
 
 module "sg" {
@@ -19,6 +25,7 @@ module "sg" {
   app_port    = var.app_port
   alb_sg_name = var.alb_sg_name
   ecs_sg_name = var.ecs_sg_name
+  tags        = var.tags
 }
 
 module "alb" {
@@ -33,6 +40,7 @@ module "alb" {
   health_check_path     = var.health_check_path
   health_check_matcher  = var.health_check_matcher
   ssl_certificate_arn   = var.ssl_certificate_arn
+  tags                  = var.tags
 }
 
 module "ecs" {
@@ -46,11 +54,11 @@ module "ecs" {
   ecs_task_cpu              = var.ecs_task_cpu
   ecs_task_memory           = var.ecs_task_memory
   ecs_desired_count         = var.ecs_desired_count
-  aws_region                = var.aws_region
   private_subnet_ids        = module.vpc.private_subnet_ids
   ecs_security_group_id     = module.sg.ecs_sg_id
   target_group_arn          = module.alb.target_group_arn
   ecs_environment_variables = var.ecs_environment_variables
+  tags                      = var.tags
 }
 
 module "codebuild" {
@@ -59,8 +67,6 @@ module "codebuild" {
   build_timeout         = var.build_timeout
   build_compute_type    = var.build_compute_type
   build_image           = var.build_image
-  aws_region            = var.aws_region
-  aws_account_id        = var.aws_account_id
   image_repo_name       = var.image_repo_name
   image_tag             = var.image_tag
   buildspec             = var.buildspec
@@ -71,8 +77,6 @@ module "codebuild" {
 module "codepipeline" {
   source                 = "./modules/codepipeline"
   project_name           = var.project_name
-  aws_region             = var.aws_region
-  aws_account_id         = var.aws_account_id
   github_oauth_token     = var.github_oauth_token
   github_repository      = var.github_repository
   github_branch          = var.github_branch
@@ -81,4 +85,3 @@ module "codepipeline" {
   ecs_service_name       = var.ecs_service_name
   tags                   = var.tags
 }
-

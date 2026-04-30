@@ -1,6 +1,10 @@
+terraform {
+  required_version = ">= 1.0"
+}
+
 resource "aws_vpc" "lab_1" {
   cidr_block = var.vpc_cidr
-  tags       = { Name = "main-vpc" }
+  tags       = merge(var.tags, { Name = "main-vpc" })
 }
 
 resource "aws_subnet" "public" {
@@ -8,7 +12,7 @@ resource "aws_subnet" "public" {
   cidr_block              = var.public_subnet
   map_public_ip_on_launch = true
   availability_zone       = var.az
-  tags                    = { Name = "public-subnet" }
+  tags                    = merge(var.tags, { Name = "public-subnet" })
 }
 
 resource "aws_subnet" "public_b" {
@@ -16,26 +20,26 @@ resource "aws_subnet" "public_b" {
   cidr_block              = var.public_subnet_b
   map_public_ip_on_launch = true
   availability_zone       = var.az_2
-  tags                    = { Name = "public-subnet-b" }
+  tags                    = merge(var.tags, { Name = "public-subnet-b" })
 }
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.lab_1.id
   cidr_block        = var.private_subnet
   availability_zone = var.az
-  tags              = { Name = "private-subnet" }
+  tags              = merge(var.tags, { Name = "private-subnet" })
 }
 
 resource "aws_subnet" "private_b" {
   vpc_id            = aws_vpc.lab_1.id
   cidr_block        = var.private_subnet_b
   availability_zone = var.az_2
-  tags              = { Name = "private-subnet-b" }
+  tags              = merge(var.tags, { Name = "private-subnet-b" })
 }
 
 resource "aws_internet_gateway" "lab_1" {
   vpc_id = aws_vpc.lab_1.id
-  tags   = { Name = "main-igw" }
+  tags   = merge(var.tags, { Name = "main-igw" })
 }
 
 resource "aws_route_table" "public" {
@@ -44,7 +48,7 @@ resource "aws_route_table" "public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.lab_1.id
   }
-  tags = { Name = "public-rt" }
+  tags = merge(var.tags, { Name = "public-rt" })
 }
 
 resource "aws_route_table_association" "public" {
@@ -64,7 +68,7 @@ resource "aws_eip" "nat" {
 resource "aws_nat_gateway" "lab_1" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public.id
-  tags          = { Name = "main-nat" }
+  tags          = merge(var.tags, { Name = "main-nat" })
 }
 
 resource "aws_route_table" "private" {
@@ -73,7 +77,7 @@ resource "aws_route_table" "private" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.lab_1.id
   }
-  tags = { Name = "private-rt" }
+  tags = merge(var.tags, { Name = "private-rt" })
 }
 
 resource "aws_route_table_association" "private" {

@@ -19,11 +19,12 @@ Creates an AWS Application Load Balancer with HTTP/HTTPS listeners, target group
 | `security_group_id` | `string` | Yes | - | ALB security group ID (from security_group module) |
 | `alb_name` | `string` | No | `"app-alb"` | Name tag for the ALB |
 | `target_group_name` | `string` | No | `"app-tg"` | Name for the target group |
-| `target_group_port` | `number` | No | `8080` | Port number for target group routing (should match container port) |
+| `target_group_port` | `number` | No | `8080` | Port number for target group routing (1-65535) |
 | `target_group_protocol` | `string` | No | `"HTTP"` | Protocol for target group (HTTP or HTTPS) |
 | `health_check_path` | `string` | No | `"/health"` | Endpoint path for health checks |
 | `health_check_matcher` | `string` | No | `"200-399"` | HTTP status codes considered healthy |
 | `ssl_certificate_arn` | `string` | No | `null` | ACM certificate ARN (enables HTTPS listener if provided) |
+| `tags` | `map(string)` | No | `{}` | Global tags applied to ALB and target group (Name tags added automatically) |
 
 ## 🔗 Outputs
 
