@@ -21,8 +21,8 @@ Creates a complete Virtual Private Cloud (VPC) infrastructure with public and pr
 | `public_subnet_b` | `string` | Yes | - | CIDR block for second public subnet (AZ-b) |
 | `private_subnet` | `string` | Yes | - | CIDR block for first private subnet (AZ-a) |
 | `private_subnet_b` | `string` | Yes | - | CIDR block for second private subnet (AZ-b) |
-| `az` | `string` | Yes | - | First Availability Zone (e.g., "ap-southeast-1a") |
-| `az_2` | `string` | Yes | - | Second Availability Zone (e.g., "ap-southeast-1b") |
+| `az` | `string` | Yes | - | First Availability Zone (e.g., "us-east-1a") |
+| `az_2` | `string` | Yes | - | Second Availability Zone (e.g., "us-east-1b") |
 
 ## 🔗 Outputs
 
@@ -87,8 +87,8 @@ module "vpc" {
   public_subnet_b  = "10.0.4.0/22"
   private_subnet   = "10.0.8.0/22"
   private_subnet_b = "10.0.12.0/22"
-  az               = "ap-southeast-1a"
-  az_2             = "ap-southeast-1b"
+  az               = "us-east-1a"
+  az_2             = "us-east-1b"
 }
 ```
 

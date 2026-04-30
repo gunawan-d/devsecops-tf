@@ -57,7 +57,7 @@ module "alb" {
 ### With HTTPS (using terraform.tfvars):
 ```hcl
 # terraform.tfvars
-ssl_certificate_arn = "arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+ssl_certificate_arn = "arn:aws:acm:us-east-1:[ACCOUNT_ID]:certificate/..."
 
 # main.tf
 module "alb" {
@@ -78,14 +78,14 @@ module "alb" {
 
 ### With HTTPS (using environment variable):
 ```bash
-export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:us-east-1:[ACCOUNT_ID]:certificate/..."
 terraform apply -target=module.alb
 ```
 
 ## 🔐 SSL/TLS Configuration
 
 ### Prerequisites
-1. ACM certificate requested/imported in **same region** as ALB (ap-southeast-1)
+1. ACM certificate requested/imported in **same region** as ALB (us-east-1)
 2. Certificate domain must match your custom domain (e.g., `devsecops.igunawan.com`)
 3. Certificate status must be **ISSUED** (not pending validation)
 
@@ -110,13 +110,13 @@ _xxxxxxxx.devsecops.igunawan.com  →  _yyyyyyyy.acm-validations.aws.
 
 **Option 1: Via terraform.tfvars**
 ```hcl
-ssl_certificate_arn = "arn:aws:acm:ap-southeast-1:account:certificate/..."
+ssl_certificate_arn = "arn:aws:acm:us-east-1:account:certificate/..."
 ```
 Then: `terraform apply -target=module.alb`
 
 **Option 2: Via environment variable**
 ```bash
-export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:account:certificate/..."
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:us-east-1:account:certificate/..."
 terraform apply -target=module.alb
 ```
 

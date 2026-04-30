@@ -25,7 +25,7 @@ Creates an Amazon ECS cluster with Fargate launch type, task definition, service
 | `ecs_task_family` | `string` | Yes | - | Family name for task definition (used in log group path) |
 | `ecs_service_name` | `string` | Yes | - | Name of the ECS service |
 | `ecs_container_name` | `string` | Yes | - | Container name within the task |
-| `ecs_container_image` | `string` | Yes | - | ECR image URI (e.g., `[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/repo:tag`) |
+| `ecs_container_image` | `string` | Yes | - | ECR image URI (e.g., `[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/repo:tag`) |
 | `ecs_container_port` | `number` | Yes | - | Container port that application listens on |
 | `ecs_task_cpu` | `string` | Yes | - | CPU units for task (valid: "256", "512", "1024", "2048") |
 | `ecs_task_memory` | `string` | Yes | - | Memory in MiB (valid: "512", "1024", "2048", "4096", etc.) |
@@ -62,7 +62,7 @@ The module generates the following container definition:
   "containerDefinitions": [
     {
       "name": "app-tf",
-      "image": "[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development",
+      "image": "[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/apps-tf:development",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -77,7 +77,7 @@ The module generates the following container definition:
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/development/app-task",
-          "awslogs-region": "ap-southeast-1",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
       },
@@ -97,12 +97,12 @@ module "ecs" {
   ecs_task_family       = "app-task"
   ecs_service_name      = "app-service"
   ecs_container_name    = "app-tf"
-  ecs_container_image   = "[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development"
+  ecs_container_image   = "[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/apps-tf:development"
   ecs_container_port    = 8080
   ecs_task_cpu          = "256"
   ecs_task_memory       = "512"
   ecs_desired_count     = 2
-  aws_region            = "ap-southeast-1"
+  aws_region            = "us-east-1"
   private_subnet_ids    = module.vpc.private_subnet_ids
   ecs_security_group_id = module.sg.ecs_sg_id
   target_group_arn      = module.alb.target_group_arn
@@ -153,7 +153,7 @@ resource "aws_iam_role_policy_attachment" "s3_access" {
 aws logs get-log-events \
   --log-group-name "/ecs/development/app-task" \
   --log-stream-name "ecs/container-id" \
-  --region ap-southeast-1
+  --region us-east-1
 ```
 
 ### ECS Console

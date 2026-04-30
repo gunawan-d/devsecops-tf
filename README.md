@@ -2,6 +2,20 @@
 
 Terraform infrastructure for deploying applications on AWS: **VPC → ALB (HTTPS) → ECS Fargate**.
 
+1. Github Terraform :  https://github.com/gunawan-d/devsecops-tf
+2. Github Application : https://github.com/gunawan-d/apps-tf/tree/main
+3. You can check the deployed application at: `https://devsecops.igunawan.com`
+
+
+![Test Results](image-1.png)
+
+## 🔄 CI/CD Information
+
+CI/CD pipeline is implemented using GitHub Actions for building and pushing Docker images to ECR, followed by AWS CodePipeline for deployment to ECS Fargate. 
+
+Due to AWS account restrictions (Sandboxing) on new accounts affecting CodeBuild quotas, GitHub Actions serves as the primary CI provider to ensure reliable image building and pushing.
+
+
 ## 🚀 Quick Start
 
 ```bash
@@ -9,7 +23,7 @@ Terraform infrastructure for deploying applications on AWS: **VPC → ALB (HTTPS
 terraform init
 
 # Set SSL certificate (if using HTTPS)
-export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:us-east-1:[ACCOUNT_ID]:certificate/..."
 
 # Apply all modules
 terraform apply
@@ -19,6 +33,8 @@ terraform apply -target=module.vpc
 terraform apply -target=module.sg
 terraform apply -target=module.alb
 terraform apply -target=module.ecs
+terraform apply -target=module.codebuild
+terraform apply -target=module.codepipeline
 ```
 
 Access: `https://devsecops.igunawan.com`
@@ -43,11 +59,11 @@ public_subnet    = "10.0.0.0/22"
 public_subnet_b  = "10.0.4.0/22"
 private_subnet   = "10.0.8.0/22"
 private_subnet_b = "10.0.12.0/22"
-az               = "ap-southeast-1a"
-az_2             = "ap-southeast-1b"
+az               = "us-east-1a"
+az_2             = "us-east-1b"
 
 # Application
-ecs_container_image = "[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development"
+ecs_container_image = "[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/apps-tf:development"
 
 # SSL (optional - leave null for HTTP only)
 ssl_certificate_arn = null  # Set via env var or update this value
@@ -59,10 +75,10 @@ Instead of editing `terraform.tfvars`, you can set variables via environment:
 
 ```bash
 # Single variable
-export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+export TF_VAR_ssl_certificate_arn="arn:aws:acm:us-east-1:[ACCOUNT_ID]:certificate/..."
 
 # Multiple variables
-export TF_VAR_ecs_container_image="[ACCOUNT_ID].dkr.ecr.ap-southeast-1.amazonaws.com/apps-tf:development"
+export TF_VAR_ecs_container_image="[ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/apps-tf:development"
 export TF_VAR_vpc_cidr="10.0.0.0/16"
 
 # Then apply
@@ -100,7 +116,7 @@ terraform apply -target=module.alb
 3. Wait for certificate status = **ISSUED**
 4. Set certificate ARN:
    ```bash
-   export TF_VAR_ssl_certificate_arn="arn:aws:acm:ap-southeast-1:[ACCOUNT_ID]:certificate/..."
+   export TF_VAR_ssl_certificate_arn="arn:aws:acm:us-east-1:[ACCOUNT_ID]:certificate/..."
    ```
 5. Apply ALB module:
    ```bash
